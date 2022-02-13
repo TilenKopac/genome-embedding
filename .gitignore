@@ -1,0 +1,7 @@
+.ipynb_checkpoints
+.idea
+__pycache__
+data
+models
+checkpoints
+training_logs
