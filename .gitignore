@@ -4,4 +4,4 @@ __pycache__
 data
 models
 checkpoints
-training_logs
+training-logs
