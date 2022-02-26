@@ -16,8 +16,10 @@ batch_size = 1024
 n_mutations = 3
 if batch_size % (n_mutations + 1) != 0:
     raise ValueError("Batch size has to be divisible by n_mutations + 1!")
+# limit = 1000
+limit = None
 
-dataset = Dataset(data_dir, window_size, step_size, batch_size, n_mutations)
+dataset = Dataset(data_dir, window_size, step_size, batch_size, n_mutations, limit)
 
 # autoencoder parameters
 latent_dim = 10
@@ -63,7 +65,7 @@ def train_step(iteration, model, inputs, optimizer):
 
 
 # tensorboard training logs
-logs_dir = "./training_logs/"
+logs_dir = "./training-logs/"
 train_log_dir = logs_dir + "test"
 train_summary_writer = tf.summary.create_file_writer(train_log_dir)
 
@@ -108,7 +110,7 @@ for epoch in range(n_epochs):
     accuracy = accuracy_metric.result()
     print(f"Epoch {epoch + 1} Reconstruction loss {rec_loss:.4e} "
           f"Sequentiality loss {seq_loss:.4e} Similarity loss {sim_loss:.4e} "
-          f"Accuracy {accuracy.result() * 100:.2f}")
+          f"Accuracy {accuracy * 100:.2f}")
 
     with train_summary_writer.as_default():
         tf.summary.scalar(f"total_loss_epochs", total_loss, step=epoch)
