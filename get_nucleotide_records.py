@@ -7,14 +7,6 @@ from Bio import Entrez, SeqIO
 from Bio.Seq import UnknownSeq
 from tqdm import tqdm
 
-
-def get_taxonomy(rec):
-    tax = {}
-    for element in rec["LineageEx"]:
-        tax[str(element["Rank"])] = str(element["ScientificName"])
-    return tax
-
-
 search_terms = [
     "Viruses[Organism] AND refseq[filter]",
     "Bacteria[Organism] AND refseq[filter]"
@@ -34,7 +26,8 @@ try:
         Entrez.email = login.get("email")
         Entrez.api_key = login.get("api_key")
 except FileNotFoundError:
-    raise Exception("Please provide the \"entrez_credentials.json\" file with e-mail and an optional API key to use in Entrez queries")
+    raise Exception("Please provide the \"entrez_credentials.json\" file with e-mail "
+                    "and an optional API key to use in Entrez queries")
 
 if not os.path.isdir("./data"):
     os.makedirs("./data")
@@ -43,11 +36,11 @@ for data_dir in data_dirs:
         os.makedirs(data_dir)
 
 for term, data_dir, sampling_factor in zip(search_terms, data_dirs, sampling_factors):
-    print(f"Obtaining data for search term '{term}'")
+    print(f"Obtaining nucleotide records for search term '{term}'")
 
     # set esearch and efetch batch sizes
-    esearch_batch = 100 * sampling_factor
-    efetch_batch = 50
+    esearch_batch = 1000 * sampling_factor
+    efetch_batch = 100
 
     # get count of matching records
     handle = Entrez.esearch(db="nucleotide", term=term, retmax=0)
