@@ -4,7 +4,7 @@ import tensorflow as tf
 from tqdm import tqdm
 
 from autoencoders.convolutional_small import ConvolutionalSmallAutoencoder
-from dataset import Dataset
+from datasets.genome_window_dataset import GenomeWindowDataset
 from metrics.locality_preserving_loss import LocalityPreservingLoss
 from metrics.reconstruction_accuracy import ReconstructionAccuracy
 
@@ -19,7 +19,7 @@ if batch_size % (n_mutations + 1) != 0:
 # limit = 1000
 limit = None
 
-dataset = Dataset(data_dir, window_size, step_size, batch_size, n_mutations, limit)
+dataset = GenomeWindowDataset(data_dir, window_size, step_size, batch_size, n_mutations)
 
 # autoencoder parameters
 latent_dim = 10
