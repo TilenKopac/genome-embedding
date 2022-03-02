@@ -9,7 +9,7 @@ from metrics.locality_preserving_loss import LocalityPreservingLoss
 from metrics.reconstruction_accuracy import ReconstructionAccuracy
 
 # dataset parameters
-data_dir = "./data/viruses/fasta"
+data_dir = "./data/viruses/fasta/train"
 window_size = 128
 step_size = 4
 batch_size = 1024
