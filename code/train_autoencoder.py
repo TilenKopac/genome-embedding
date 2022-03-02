@@ -3,7 +3,7 @@ import time
 import tensorflow as tf
 from tqdm import tqdm
 
-from autoencoders.convolutional_small import ConvolutionalSmallAutoencoder
+from code.autoencoders.convolutional_small import ConvolutionalSmallAutoencoder
 from datasets.genome_window_dataset import GenomeWindowDataset
 from metrics.locality_preserving_loss import LocalityPreservingLoss
 from metrics.reconstruction_accuracy import ReconstructionAccuracy
