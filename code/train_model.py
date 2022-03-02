@@ -9,7 +9,7 @@ from metrics.locality_preserving_loss import LocalityPreservingLoss
 from metrics.reconstruction_accuracy import ReconstructionAccuracy
 
 # dataset parameters
-data_dir = "./data/viruses/fasta/train"
+data_dir = "../data/viruses/fasta/train"
 window_size = 128
 step_size = 4
 batch_size = 1024
@@ -65,12 +65,12 @@ def train_step(iteration, model, inputs, optimizer):
 
 
 # tensorboard training logs
-logs_dir = "./training-logs/"
+logs_dir = "../training-logs/"
 train_log_dir = logs_dir + "test"
 train_summary_writer = tf.summary.create_file_writer(train_log_dir)
 
 # model checkpoints
-checkpoints_dir = "./checkpoints/"
+checkpoints_dir = "../checkpoints/"
 checkpoints_path = checkpoints_dir + "test"
 checkpoint = tf.train.Checkpoint(autoencoder=autoencoder, optimizer=optimizer)
 checkpoint_manager = tf.train.CheckpointManager(checkpoint, checkpoints_path, max_to_keep=None)

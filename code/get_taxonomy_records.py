@@ -14,13 +14,13 @@ def get_taxonomy(rec):
     return tax
 
 
-nuc_records_dirs = ["./data/viruses/fasta", "./data/bacteria/fasta"]
-tax_records_dirs = ["./data/viruses/taxonomy", "./data/bacteria/taxonomy"]
+nuc_records_dirs = ["../data/viruses/fasta", "../data/bacteria/fasta"]
+tax_records_dirs = ["../data/viruses/taxonomy", "../data/bacteria/taxonomy"]
 efetch_batch = 100
 
 # set Entrez email and API key
 try:
-    with open("entrez_credentials.json", "r") as file:
+    with open("../entrez_credentials.json", "r") as file:
         login = json.load(file)
         if not login.get("email"):
             raise Exception("Field \"email\" in file \"entrez_credentials.json\" should not be empty")
@@ -32,8 +32,8 @@ except FileNotFoundError:
     raise Exception("Please provide the \"entrez_credentials.json\" file with e-mail "
                     "and an optional API key to use in Entrez queries")
 
-if not os.path.isdir("./data"):
-    os.makedirs("./data")
+if not os.path.isdir("../data"):
+    os.makedirs("../data")
 for data_dir in nuc_records_dirs:
     if not os.path.isdir(data_dir):
         os.makedirs(data_dir)

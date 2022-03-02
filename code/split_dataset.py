@@ -4,7 +4,7 @@ import shutil
 
 from tqdm import tqdm
 
-data_dir = "./data/viruses/fasta"
+data_dir = "../data/viruses/fasta"
 subsets = ["train", "val", "test"]
 split = [0.8, 0.1, 0.1]
 
