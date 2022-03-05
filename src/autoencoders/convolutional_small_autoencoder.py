@@ -36,7 +36,7 @@ class ConvolutionalSmallAutoencoder(tf.keras.Model):
             ]
         )
 
-    def call(self, inputs, training=False):
-        encoded = self.encoder(inputs, training=training)
-        reconstructed = self.decoder(encoded, training=training)
+    def call(self, inputs):
+        encoded = self.encoder(inputs)
+        reconstructed = self.decoder(encoded)
         return reconstructed

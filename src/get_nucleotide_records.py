@@ -50,9 +50,11 @@ for term, data_dir, sampling_factor in zip(search_terms, data_dirs, sampling_fac
 
     # progress bar
     pbar = tqdm(total=record_count // sampling_factor)
+    n_retrieved = len(os.listdir(data_dir))
+    pbar.update(n_retrieved)
 
     # find matching record ids
-    for i in range(0, record_count, esearch_batch):
+    for i in range(n_retrieved, record_count, esearch_batch):
         id_list = set()
         handle = Entrez.esearch(db="nucleotide", term=term, retstart=i, retmax=esearch_batch, idtype="acc",
                                 usehistory="y", sort="accession")
