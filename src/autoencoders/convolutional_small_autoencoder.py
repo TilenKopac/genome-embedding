@@ -12,9 +12,11 @@ class ConvolutionalSmallAutoencoder(tf.keras.Model):
 
         self.encoder = tf.keras.Sequential(
             [
-                tf.keras.layers.Conv1D(self.n_filters, self.kernel_size, strides=self.strides, padding="same", activation="elu"),
+                tf.keras.layers.Conv1D(self.n_filters, self.kernel_size, strides=self.strides, padding="same",
+                                       activation="elu"),
                 tf.keras.layers.BatchNormalization(),
-                tf.keras.layers.Conv1D(self.n_filters, self.kernel_size, strides=self.strides, padding="same", activation="elu"),
+                tf.keras.layers.Conv1D(self.n_filters, self.kernel_size, strides=self.strides, padding="same",
+                                       activation="elu"),
                 tf.keras.layers.BatchNormalization(),
                 tf.keras.layers.Flatten(),
                 tf.keras.layers.Dense(self.latent_dim, activation="relu")
@@ -24,15 +26,17 @@ class ConvolutionalSmallAutoencoder(tf.keras.Model):
             [
                 tf.keras.layers.Dense((2 * self.strides) * self.n_filters, activation="relu"),
                 tf.keras.layers.Reshape(((2 * self.strides), self.n_filters)),
-                tf.keras.layers.Conv1DTranspose(self.n_filters, self.kernel_size, strides=self.strides, padding="same", activation="elu"),
+                tf.keras.layers.Conv1DTranspose(self.n_filters, self.kernel_size, strides=self.strides, padding="same",
+                                                activation="elu"),
                 tf.keras.layers.BatchNormalization(),
-                tf.keras.layers.Conv1DTranspose(self.n_filters, self.kernel_size, strides=self.strides, padding="same", activation="elu"),
+                tf.keras.layers.Conv1DTranspose(self.n_filters, self.kernel_size, strides=self.strides, padding="same",
+                                                activation="elu"),
                 tf.keras.layers.BatchNormalization(),
                 tf.keras.layers.Conv1D(4, self.kernel_size, padding="same", activation="softmax")
             ]
         )
 
-    def call(self, inputs, training=False):
-        encoded = self.encoder(inputs, training=training)
-        reconstructed = self.decoder(encoded, training=training)
+    def call(self, inputs):
+        encoded = self.encoder(inputs)
+        reconstructed = self.decoder(encoded)
         return reconstructed
