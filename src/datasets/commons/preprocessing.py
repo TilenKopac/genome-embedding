@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 import tensorflow as tf
 
@@ -7,7 +9,8 @@ nuc_integer_enc = {
     "C": 2,
     "T": 3,
     "N": 4}
-valid_chars = nucleotides = set(nuc_integer_enc.keys())
+valid_chars = set(nuc_integer_enc.keys())
+nucleotides = copy.deepcopy(valid_chars)
 nucleotides.remove("N")
 # N is encoded as all zeros based on the work of Bartoszewicz (https://doi.org/10.1101/2020.01.29.925354)
 integer_onehot_enc = {

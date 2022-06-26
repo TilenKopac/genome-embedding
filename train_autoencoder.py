@@ -16,21 +16,26 @@ window_size = 128
 step_size = 4
 batch_size = 4096
 n_mutations = 3
+n_train_batches = 100000
+n_val_batches = int(n_train_batches * 0.12)
 
-train_dataset = GenomeWindowDataset(data_dir, "train", window_size, step_size, batch_size, n_mutations, limit=None)
-val_dataset = GenomeWindowDataset(data_dir, "val", window_size, step_size, batch_size, n_mutations, limit=None)
+train_dataset = GenomeWindowDataset(data_dir, "train", window_size, step_size, batch_size, n_mutations,
+                                    limit=n_train_batches)
+val_dataset = GenomeWindowDataset(data_dir, "val", window_size, step_size, batch_size, n_mutations, limit=n_val_batches)
 
 # autoencoder parameters
-latent_dim = 6
-autoencoder_name = "virus-conv-small-ld6"
+latent_dim = 10
+autoencoder_name = "fri_virus_conv_small_loc_pres_ld10"
 
 # training parameters
 max_sim_weight = 1e-4
 max_seq_weight = 1e-2
+# max_sim_weight = 0.0
+# max_seq_weight = 0.0
 n_seq_windows = 3
 seq_window_weights = tf.constant([1.0, 0.75, 0.5])
 learning_rate = 1e-4
-n_epochs = 20
+n_epochs = 10
 # annealing
 n_weight_cycles = 5
 weight_cycle_proportion = 0.8
@@ -97,13 +102,14 @@ for epoch in range(n_epochs):
 
         if i % 100 == 0:
             with train_summary_writer.as_default():
+                iter = epoch * train_dataset.n_batches + i
                 total_loss, rec_loss, seq_loss, sim_loss = loss_fn.results()
                 train_acc = train_acc_metric.result()
-                tf.summary.scalar(f"total_loss_iters", total_loss, step=epoch * train_dataset.n_batches + i)
-                tf.summary.scalar(f"reconstruction_loss_iters", rec_loss, step=epoch * train_dataset.n_batches + i)
-                tf.summary.scalar(f"sequentiality_loss_iters", seq_loss, step=epoch * train_dataset.n_batches + i)
-                tf.summary.scalar(f"similarity_loss_iters", sim_loss, step=epoch * train_dataset.n_batches + i)
-                tf.summary.scalar(f"train_accuracy_iters", train_acc, step=epoch * train_dataset.n_batches + i)
+                tf.summary.scalar(f"train_loss_iters", total_loss, step=iter)
+                tf.summary.scalar(f"train_reconstruction_loss_iters", rec_loss, step=iter)
+                tf.summary.scalar(f"train_sequentiality_loss_iters", seq_loss, step=iter)
+                tf.summary.scalar(f"train_similarity_loss_iters", sim_loss, step=iter)
+                tf.summary.scalar(f"train_accuracy_iters", train_acc, step=iter)
 
     # validation loop
     for _, originals in tqdm(val_dataset.tf_dataset, total=val_dataset.n_batches,
@@ -125,10 +131,10 @@ for epoch in range(n_epochs):
           f"Train accuracy {train_acc * 100:.2f} Validation accuracy {val_acc * 100:.2f}")
 
     with train_summary_writer.as_default():
-        tf.summary.scalar(f"total_loss_epochs", total_loss, step=epoch)
-        tf.summary.scalar(f"reconstruction_loss_epochs", rec_loss, step=epoch)
-        tf.summary.scalar(f"sequentiality_loss_epochs", seq_loss, step=epoch)
-        tf.summary.scalar(f"similarity_loss_epochs", sim_loss, step=epoch)
+        tf.summary.scalar(f"train_loss_epochs", total_loss, step=epoch)
+        tf.summary.scalar(f"train_reconstruction_loss_epochs", rec_loss, step=epoch)
+        tf.summary.scalar(f"train_sequentiality_loss_epochs", seq_loss, step=epoch)
+        tf.summary.scalar(f"train_similarity_loss_epochs", sim_loss, step=epoch)
         tf.summary.scalar(f"train_accuracy_epochs", train_acc, step=epoch)
         tf.summary.scalar(f"val_accuracy_epochs", train_acc, step=epoch)
 
