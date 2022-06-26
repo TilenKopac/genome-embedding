@@ -1,4 +1,5 @@
 import os
+import pickle
 import time
 
 import tensorflow as tf
@@ -10,23 +11,29 @@ from src.datasets.taxonomy_dataset import TaxonomyDataset, TaxonomicRankEnum
 from src.samplers.sampler_enum import SamplerEnum
 
 # dataset parameters
-data_dir = os.path.join(DATA_DIR, "viruses")
-encoder_name = "virus-conv-small-ld6"
-sampler_name = SamplerEnum.HYPERCUBE_FINGERPRINT_QUARTILE.value
+data_dir = os.path.join(DATA_DIR, "bacteria_661k_assemblies_balanced")
+encoder_name = "661k_conv_small_loc_pres_ld10"
+sampler_name = SamplerEnum.HYPERCUBE_FINGERPRINT_MEDIAN_NORMALIZED.value
 
 window_size = 128
-step_size = 4
-batch_size = 32
-tax_rank = TaxonomicRankEnum.KINGDOM
+batch_size = 64
+tax_rank = TaxonomicRankEnum.FAMILY
 
-train_dataset = TaxonomyDataset(data_dir, encoder_name, sampler_name, "train", batch_size, tax_rank, limit=None)
-val_dataset = TaxonomyDataset(data_dir, encoder_name, sampler_name, "val", batch_size, tax_rank, limit=None)
+with open(os.path.join(DATA_DIR, "bacteria_661k_assemblies", "taxa_index.pkl"), "rb") as file:
+    taxa_index = pickle.load(file)
+with open(os.path.join(DATA_DIR, "bacteria_661k_assemblies", "organism_taxa.pkl"), "rb") as file:
+    organism_taxa = pickle.load(file)
+train_dataset = TaxonomyDataset(data_dir, "train", encoder_name, sampler_name, batch_size, taxa_index, organism_taxa,
+                                tax_rank, limit=None)
+val_dataset = TaxonomyDataset(data_dir, "val", encoder_name, sampler_name, batch_size, taxa_index, organism_taxa,
+                              tax_rank, limit=None)
+train_dataset.get_record()
 
 # training parameters
 learning_rate = 1e-5
-n_epochs = 300
+n_epochs = 100
 
-classifier_name = "virus-kingdom-hypercube-quartile-classifier-lr1e-5"
+classifier_name = "bacteria-family-hypercube-median-normalized-classifier"
 classifier = TaxonomyClassifier(train_dataset.n_labels, n_layers=4, n_units=100)
 optimizer = tf.keras.optimizers.Adam(learning_rate)
 
@@ -79,14 +86,22 @@ for epoch in range(n_epochs):
     start_time = time.time()
 
     # training loop
-    for step, (tax_labels, embeddings) in tqdm(enumerate(train_dataset.tf_dataset), total=train_dataset.n_batches,
-                                               desc=f"Epoch {epoch} training"):
+    pbar = tqdm(desc=f"Epoch {epoch} training")
+    train_dataset.prepare_for_epoch()
+    for i, (tax_labels, embeddings) in enumerate(train_dataset.tf_dataset):
         loss_value = train_step(embeddings, tax_labels)
+        if i % 100 == 0 and i != 0:
+            pbar.update(100)
+    pbar.close()
 
     # validation loop
-    for tax_labels, embeddings in tqdm(val_dataset.tf_dataset, total=val_dataset.n_batches,
-                                       desc=f"Epoch {epoch} validation"):
+    pbar = tqdm(desc=f"Epoch {epoch} validation")
+    val_dataset.prepare_for_epoch()
+    for i, (tax_labels, embeddings) in enumerate(val_dataset.tf_dataset):
         val_step(embeddings, tax_labels)
+        if i % 100 == 0 and i != 0:
+            pbar.update(100)
+    pbar.close()
 
     # log loss and metrics and reset metrics
     train_acc = train_acc_metric.result()

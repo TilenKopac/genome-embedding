@@ -17,7 +17,7 @@ from src.metrics.locality_preserving_loss_multigpu import LocalityPreservingLoss
 per_worker_batch_size = 4096
 global_batch_size = per_worker_batch_size * strategy.num_replicas_in_sync
 
-n_epochs = 5
+n_epochs = 8
 start_epoch = 0
 
 
@@ -35,22 +35,18 @@ def write_filepath(filepath, task_type, task_id, cluster_spec):
 
 # dataset parameters
 data_dir = os.path.join(DATA_DIR, "bacteria_661k_assemblies_balanced")
-window_size = 128
+window_size = 75
 step_size = 3
-n_mutations = 3
-n_train_batches = 7000000
-n_val_batches = 800000
+n_mutations = 1
 
-train_dataset = DistributedGenomeWindowDataset(data_dir, "train", window_size, step_size, n_mutations,
-                                               # shuffle_buffer_size=int(
-                                               #     n_train_batches * 0.01 // strategy.num_replicas_in_sync),
-                                               limit=int(n_train_batches // strategy.num_replicas_in_sync))
-val_dataset = DistributedGenomeWindowDataset(data_dir, "val", window_size, step_size, n_mutations,
-                                             limit=int(n_val_batches // strategy.num_replicas_in_sync))
+train_dataset = DistributedGenomeWindowDataset(data_dir, "train", window_size, step_size, global_batch_size,
+                                               n_mutations, shuffle=False)
+val_dataset = DistributedGenomeWindowDataset(data_dir, "val", window_size, step_size, global_batch_size,
+                                             n_mutations, shuffle=False)
 
 # autoencoder parameters
 latent_dim = 10
-autoencoder_name = "661k_conv_small_loc_pres_ld10"
+autoencoder_name = "661k_conv_small_loc_pres_ld10_ws75"
 
 # training parameters
 max_seq_weight = 1e-2
@@ -72,11 +68,11 @@ with strategy.scope():
         lambda input_context: val_dataset.instantiate_dataset(global_batch_size, input_context))
 
     # autoencoder and optimizer
-    autoencoder = ConvolutionalSmallAutoencoder(latent_dim)
+    autoencoder = ConvolutionalSmallAutoencoder(window_size, latent_dim, 5)
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
     # metrics
-    loss_fn = LocalityPreservingLossMultigpu(n_mutations, train_dataset.n_batches, per_worker_batch_size,
+    loss_fn = LocalityPreservingLossMultigpu(n_mutations, train_dataset.global_n_batches, per_worker_batch_size,
                                              max_sim_weight, max_seq_weight, n_seq_windows, seq_window_weights,
                                              n_weight_cycles, weight_cycle_proportion)
     train_loss = tf.keras.metrics.Mean()
@@ -162,7 +158,7 @@ train_summary_writer = tf.summary.create_file_writer(logdir=write_logs_dir)
 checkpoints_dir = os.path.join(CHECKPOINTS_DIR, "autoencoders", autoencoder_name)
 epoch = tf.Variable(initial_value=tf.constant(start_epoch, dtype=tf.dtypes.int64), name="epoch")
 step_in_epoch = tf.Variable(initial_value=tf.constant(0.0, dtype=tf.dtypes.float32), name="step_in_epoch")
-checkpoint = tf.train.Checkpoint(model=autoencoder, epoch=epoch, step_in_epoch=step_in_epoch)
+checkpoint = tf.train.Checkpoint(model=autoencoder)
 write_checkpoint_dir = write_filepath(checkpoints_dir, task_type, task_id, cluster_spec)
 checkpoint_manager = tf.train.CheckpointManager(checkpoint, directory=write_checkpoint_dir, max_to_keep=1)
 
@@ -176,7 +172,7 @@ if latest_checkpoint:
 while epoch.numpy() < n_epochs:
     # training loop setup
     if _is_chief(task_type, task_id, cluster_spec):
-        pbar = tqdm(total=train_dataset.limit)
+        pbar = tqdm(total=train_dataset.global_n_batches)
     iterator = iter(train_tf_dataset)
     start = time.time()
 
@@ -184,14 +180,16 @@ while epoch.numpy() < n_epochs:
     if _is_chief(task_type, task_id, cluster_spec):
         print(f"Epoch {epoch.numpy()}")
         print("Starting training loop")
-    while step_in_epoch.numpy() < train_dataset.limit:
+    train_dataset.prepare_for_epoch()
+    while step_in_epoch.numpy() < train_dataset.global_n_batches:
         train_step(step_in_epoch, iterator)
         step_in_epoch.assign_add(1.0)
 
         # update progress bar
         if step_in_epoch.numpy() % 100 == 0:
-            iteration = epoch.numpy() * train_dataset.limit + step_in_epoch.numpy()
+            iteration = epoch.numpy() * train_dataset.global_n_batches + step_in_epoch.numpy()
             with train_summary_writer.as_default():
+                tf.summary.scalar(f"lp_weight", loss_fn.get_annealed_weight(iteration), step=iteration)
                 tf.summary.scalar(f"train_loss_iters", train_loss.result(), step=iteration)
                 tf.summary.scalar(f"train_reconstruction_loss_iters", train_rec_loss.result(), step=iteration)
                 tf.summary.scalar(f"train_sequentiality_loss_iters", train_seq_loss.result(), step=iteration)
@@ -207,14 +205,15 @@ while epoch.numpy() < n_epochs:
     # validation loop setup
     if _is_chief(task_type, task_id, cluster_spec):
         pbar.close()
-        pbar = tqdm(total=val_dataset.limit)
+        pbar = tqdm(total=val_dataset.global_n_batches)
     step_in_epoch.assign(0.0)
     iterator = iter(val_tf_dataset)
 
     # validation loop
     if _is_chief(task_type, task_id, cluster_spec):
         print(f"Starting validation loop")
-    while step_in_epoch.numpy() < val_dataset.limit:
+    val_dataset.prepare_for_epoch()
+    while step_in_epoch.numpy() < val_dataset.global_n_batches:
         val_step(iterator)
         step_in_epoch.assign_add(1.0)
 
