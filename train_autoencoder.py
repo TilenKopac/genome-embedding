@@ -16,12 +16,9 @@ window_size = 128
 step_size = 4
 batch_size = 4096
 n_mutations = 3
-n_train_batches = 100000
-n_val_batches = int(n_train_batches * 0.12)
 
-train_dataset = GenomeWindowDataset(data_dir, "train", window_size, step_size, batch_size, n_mutations,
-                                    limit=n_train_batches)
-val_dataset = GenomeWindowDataset(data_dir, "val", window_size, step_size, batch_size, n_mutations, limit=n_val_batches)
+train_dataset = GenomeWindowDataset(data_dir, "train", window_size, step_size, batch_size, n_mutations, shuffle=False)
+val_dataset = GenomeWindowDataset(data_dir, "val", window_size, step_size, batch_size, n_mutations, shuffle=False)
 
 # autoencoder parameters
 latent_dim = 10
@@ -40,7 +37,7 @@ n_epochs = 10
 n_weight_cycles = 5
 weight_cycle_proportion = 0.8
 
-autoencoder = ConvolutionalSmallAutoencoder(latent_dim)
+autoencoder = ConvolutionalSmallAutoencoder(window_size, latent_dim, 4)
 optimizer = tf.keras.optimizers.Adam(learning_rate)
 
 # metrics

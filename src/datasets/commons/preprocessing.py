@@ -33,24 +33,32 @@ def integer_encode(sequence):
     return [nuc_integer_enc[nuc] for nuc in sequence]
 
 
-@tf.function
-def split_into_windows(organism_id, sequence, window_size, step_size):
+@tf.function(experimental_relax_shapes=True)
+def split_into_windows(sequence, window_size, step_size):
     n_windows = (tf.shape(sequence)[0] - window_size) // step_size + 1
-    organism_ids = tf.repeat(organism_id, n_windows)
     indices = tf.reshape(tf.tile(tf.range(0, window_size), [n_windows]), (n_windows, window_size))
     increment = tf.cast(
         tf.linspace([0] * window_size, [(n_windows - 1) * step_size] * window_size, n_windows),
         tf.int32)
     indices += increment
     windows = tf.gather(sequence, indices)
-    return organism_ids, windows
+    return windows
+
+
+@tf.function
+def split_into_windows_with_id(id, sequence, window_size, step_size):
+    windows = split_into_windows(sequence, window_size, step_size)
+    ids = tf.repeat(id, tf.shape(windows)[0])
+    return ids, windows
 
 
 def split_into_windows_np(sequence, window_size, step_size):
     s0, s1 = sequence.strides
     n_windows = (sequence.shape[0] - window_size) // step_size + 1
-    windows = np.lib.stride_tricks.as_strided(sequence, shape=(n_windows, window_size * 4),
-                                              strides=(s0 * step_size, s1)).reshape((n_windows, window_size, 4))
+    windows = np.lib.stride_tricks.as_strided(sequence,
+                                              shape=(n_windows, window_size * 4),
+                                              strides=(s0 * step_size, s1),
+                                              writeable=False).reshape((n_windows, window_size, 4))
     return windows
 
 
@@ -61,19 +69,21 @@ def split_into_windows_py(sequence, window_size, step_size):
     return windows
 
 
-@tf.function
-def one_hot_encode(inputs, depth):
-    encoded = tf.one_hot(inputs, depth=depth)
+@tf.function(experimental_relax_shapes=True)
+def one_hot_encode(inputs, depth, dtype=tf.float32):
+    # tf.one_hot encodes "unknown" inputs to a vector of zeros
+    #  this means N will get encoded to [0, 0, 0, 0], which is expected
+    encoded = tf.one_hot(inputs, depth=depth, dtype=dtype)
     return encoded
 
 
-@tf.function
-def one_hot_encode_sequences(batch):
-    return one_hot_encode(batch, len(nucleotides))
+@tf.function(experimental_relax_shapes=True)
+def one_hot_encode_sequences(batch, dtype=tf.float32):
+    return one_hot_encode(batch, len(nucleotides), dtype=dtype)
 
 
-def one_hot_encode_np(inputs, depth):
-    return np.eye(depth)[np.array(inputs).reshape(-1)]
+def one_hot_encode_np(inputs):
+    return np.array(list(integer_onehot_enc.values()), dtype=np.uint8)[np.array(inputs).reshape(-1)]
 
 
 @tf.function
