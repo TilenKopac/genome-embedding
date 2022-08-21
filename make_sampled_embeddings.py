@@ -4,7 +4,6 @@ import sys
 
 import numpy as np
 import tensorflow as tf
-from tqdm import tqdm
 
 from definitions import DATA_DIR, MODELS_DIR
 from src.datasets.commons import preprocessing

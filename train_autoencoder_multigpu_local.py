@@ -23,7 +23,7 @@ n_epochs = 2
 
 # dataset parameters
 data_dir = os.path.join(DATA_DIR, "bacteria_661k_assemblies_balanced_small")
-window_size = 75
+window_size = 100
 step_size = 3
 n_mutations = 1
 
@@ -34,6 +34,7 @@ val_dataset = DistributedGenomeWindowDataset(data_dir, "val", window_size, step_
 
 # autoencoder parameters
 latent_dim = 10
+pool_size = 2
 autoencoder_name = "multigpu_local_test"
 
 # training parameters
@@ -56,7 +57,7 @@ with strategy.scope():
         lambda input_context: val_dataset.instantiate_dataset(global_batch_size, input_context))
 
     # autoencoder and optimizer
-    autoencoder = ConvolutionalSmallAutoencoder(window_size, latent_dim, 5)
+    autoencoder = ConvolutionalSmallAutoencoder(window_size, latent_dim, pool_size)
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
     # metrics
@@ -157,15 +158,15 @@ while epoch.numpy() < n_epochs:
             iteration = epoch.numpy() * train_dataset.global_n_batches + step_in_epoch.numpy()
             with train_summary_writer.as_default():
                 tf.summary.scalar(f"lp_weight", loss_fn.get_annealed_weight(iteration), step=iteration)
-                # tf.summary.scalar(f"train_loss_iters", train_loss.result(), step=iteration)
-                # tf.summary.scalar(f"train_reconstruction_loss_iters", train_rec_loss.result(), step=iteration)
-                # tf.summary.scalar(f"train_sequentiality_loss_iters", train_seq_loss.result(), step=iteration)
-                # tf.summary.scalar(f"train_similarity_loss_iters", train_sim_loss.result(), step=iteration)
-                # tf.summary.scalar(f"train_accuracy_iters", train_accuracy.result(), step=iteration)
-                # tf.summary.scalar(f"val_reconstruction_loss_iters", val_rec_loss.result(), step=iteration)
-                # tf.summary.scalar(f"val_sequentiality_loss_iters", val_seq_loss.result(), step=iteration)
-                # tf.summary.scalar(f"val_similarity_loss_iters", val_sim_loss.result(), step=iteration)
-                # tf.summary.scalar(f"val_accuracy_iters", val_accuracy.result(), step=iteration)
+                tf.summary.scalar(f"train_loss_iters", train_loss.result(), step=iteration)
+                tf.summary.scalar(f"train_reconstruction_loss_iters", train_rec_loss.result(), step=iteration)
+                tf.summary.scalar(f"train_sequentiality_loss_iters", train_seq_loss.result(), step=iteration)
+                tf.summary.scalar(f"train_similarity_loss_iters", train_sim_loss.result(), step=iteration)
+                tf.summary.scalar(f"train_accuracy_iters", train_accuracy.result(), step=iteration)
+                tf.summary.scalar(f"val_reconstruction_loss_iters", val_rec_loss.result(), step=iteration)
+                tf.summary.scalar(f"val_sequentiality_loss_iters", val_seq_loss.result(), step=iteration)
+                tf.summary.scalar(f"val_similarity_loss_iters", val_sim_loss.result(), step=iteration)
+                tf.summary.scalar(f"val_accuracy_iters", val_accuracy.result(), step=iteration)
 
     # validation loop setup
     pbar.close()

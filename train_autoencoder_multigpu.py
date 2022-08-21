@@ -17,7 +17,7 @@ from src.metrics.locality_preserving_loss_multigpu import LocalityPreservingLoss
 per_worker_batch_size = 4096
 global_batch_size = per_worker_batch_size * strategy.num_replicas_in_sync
 
-n_epochs = 8
+n_epochs = 5
 start_epoch = 0
 
 
@@ -35,7 +35,7 @@ def write_filepath(filepath, task_type, task_id, cluster_spec):
 
 # dataset parameters
 data_dir = os.path.join(DATA_DIR, "bacteria_661k_assemblies_balanced")
-window_size = 75
+window_size = 100
 step_size = 3
 n_mutations = 1
 
@@ -46,7 +46,8 @@ val_dataset = DistributedGenomeWindowDataset(data_dir, "val", window_size, step_
 
 # autoencoder parameters
 latent_dim = 10
-autoencoder_name = "661k_conv_small_loc_pres_ld10_ws75"
+pool_size = 2
+autoencoder_name = "661k_conv_small_loc_pres_ld10_ws100"
 
 # training parameters
 max_seq_weight = 1e-2
@@ -68,7 +69,7 @@ with strategy.scope():
         lambda input_context: val_dataset.instantiate_dataset(global_batch_size, input_context))
 
     # autoencoder and optimizer
-    autoencoder = ConvolutionalSmallAutoencoder(window_size, latent_dim, 5)
+    autoencoder = ConvolutionalSmallAutoencoder(window_size, latent_dim, pool_size)
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
     # metrics

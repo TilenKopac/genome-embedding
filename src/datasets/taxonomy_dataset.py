@@ -12,7 +12,7 @@ class TaxonomyDataset:
     def __init__(self, data_dir, data_subset, encoder_name, sampler_name, batch_size, taxa_index, organism_taxa,
                  tax_rank, shuffle_buffer_size=None, limit=None):
         super(TaxonomyDataset, self).__init__()
-        self.nuc_recs_file = open(os.path.join(data_dir, "sampled-embeddings", encoder_name, sampler_name,
+        self.nuc_recs_file = open(os.path.join(data_dir, "embeddings", encoder_name, sampler_name,
                                                f"{data_subset}.csv"))
         self.taxa_index = taxa_index
         self.organism_taxa = organism_taxa
@@ -29,9 +29,9 @@ class TaxonomyDataset:
         for line in self.nuc_recs_file:
             # organism id is obtained from the first part of the first field (the second part is the sequence id)
             organism_id = line.split(";")[0].split(".")[0]
-            # embedding(s) is obtained from the second field
+            # the embedding is obtained from the second field
             try:
-                embeddings = json.loads(line.split(";")[1])
+                embedding = json.loads(line.split(";")[1])
             except json.decoder.JSONDecodeError:
                 print(line)
                 break
@@ -47,16 +47,12 @@ class TaxonomyDataset:
                 # information about the taxonomy of the loaded record is not available
                 continue
 
-            yield tf.constant(tax_encoded, dtype=tf.int32), tf.constant(embeddings, dtype=tf.float32)
+            yield tf.constant(tax_encoded, dtype=tf.int32), tf.constant(embedding, dtype=tf.float32)
 
     def instantiate_dataset(self):
         dataset = tf.data.Dataset.from_generator(self.get_record, output_types=(tf.int32, tf.float32))
-        dataset = dataset.map(lambda tax_id, embeddings: (
-            preprocessing.one_hot_encode(tf.repeat(tax_id, [tf.shape(embeddings)[0]]), self.n_labels),
-            embeddings
-        ), num_parallel_calls=tf.data.AUTOTUNE)
-        dataset = dataset.flat_map(
-            lambda organism_ids, embeddings: tf.data.Dataset.from_tensor_slices((organism_ids, embeddings)))
+        dataset = dataset.map(lambda tax_id, embedding: (preprocessing.one_hot_encode(tax_id, self.n_labels),
+                                                         embedding), num_parallel_calls=tf.data.AUTOTUNE)
         dataset = dataset.batch(self.batch_size, drop_remainder=True, num_parallel_calls=tf.data.AUTOTUNE)
         dataset = dataset.prefetch(tf.data.AUTOTUNE)
         if self.limit:

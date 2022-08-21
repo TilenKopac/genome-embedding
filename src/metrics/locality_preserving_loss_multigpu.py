@@ -51,7 +51,7 @@ class LocalityPreservingLossMultigpu:
                 for j in tf.range(0, self.n_seq_windows):
                     seq_loss += self.seq_window_weights[j] * tf.reduce_mean(self.norm(masked[:-(j + 1)] - masked[j + 1:]))
                     normalization += self.seq_window_weights[j]
-        seq_loss /= normalization
+        seq_loss /= normalization + 1e-19
 
         # similarity loss
         sim_loss = 0.0

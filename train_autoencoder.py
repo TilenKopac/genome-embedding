@@ -4,31 +4,32 @@ import time
 import tensorflow as tf
 from tqdm import tqdm
 
-from definitions import DATA_DIR, CHECKPOINTS_DIR, TRAIN_LOGS_DIR
+from definitions import DATA_DIR, CHECKPOINTS_DIR, TRAIN_LOGS_DIR, MODELS_DIR
 from src.autoencoders.convolutional_small_autoencoder import ConvolutionalSmallAutoencoder
 from src.datasets.genome_window_dataset import GenomeWindowDataset
 from src.metrics.locality_preserving_loss import LocalityPreservingLoss
 from src.metrics.reconstruction_accuracy import ReconstructionAccuracy
 
 # dataset parameters
-data_dir = os.path.join(DATA_DIR, "viruses")
-window_size = 128
-step_size = 4
+data_dir = os.path.join(DATA_DIR, "bacteria_661k_assemblies_balanced_small")
+window_size = 100
+step_size = 3
 batch_size = 4096
-n_mutations = 3
+n_mutations = 1
 
 train_dataset = GenomeWindowDataset(data_dir, "train", window_size, step_size, batch_size, n_mutations, shuffle=False)
 val_dataset = GenomeWindowDataset(data_dir, "val", window_size, step_size, batch_size, n_mutations, shuffle=False)
 
 # autoencoder parameters
 latent_dim = 10
-autoencoder_name = "fri_virus_conv_small_loc_pres_ld10"
+pool_size = 2
+autoencoder_name = "661k_conv_small_loc_pres_ld10_ws100"
 
 # training parameters
-max_sim_weight = 1e-4
 max_seq_weight = 1e-2
-# max_sim_weight = 0.0
+max_sim_weight = 1e-4
 # max_seq_weight = 0.0
+# max_sim_weight = 0.0
 n_seq_windows = 3
 seq_window_weights = tf.constant([1.0, 0.75, 0.5])
 learning_rate = 1e-4
@@ -37,7 +38,7 @@ n_epochs = 10
 n_weight_cycles = 5
 weight_cycle_proportion = 0.8
 
-autoencoder = ConvolutionalSmallAutoencoder(window_size, latent_dim, 4)
+autoencoder = ConvolutionalSmallAutoencoder(window_size, latent_dim, pool_size)
 optimizer = tf.keras.optimizers.Adam(learning_rate)
 
 # metrics

@@ -13,13 +13,13 @@ valid_chars = set(nuc_integer_enc.keys())
 nucleotides = copy.deepcopy(valid_chars)
 nucleotides.remove("N")
 # N is encoded as all zeros based on the work of Bartoszewicz (https://doi.org/10.1101/2020.01.29.925354)
-integer_onehot_enc = {
+nuc_onehot_enc = {
     "A": [1.0, 0.0, 0.0, 0.0],
     "G": [0.0, 1.0, 0.0, 0.0],
     "C": [0.0, 0.0, 1.0, 0.0],
     "T": [0.0, 0.0, 0.0, 1.0],
     "N": [0.0, 0.0, 0.0, 0.0]}
-nuc_onehot_enc_list = tf.constant(list(integer_onehot_enc.values()), dtype=tf.float32)
+nuc_onehot_enc_list = tf.constant(list(nuc_onehot_enc.values()), dtype=tf.float32)
 
 
 def is_sequence_valid(sequence):
@@ -83,7 +83,7 @@ def one_hot_encode_sequences(batch, dtype=tf.float32):
 
 
 def one_hot_encode_np(inputs):
-    return np.array(list(integer_onehot_enc.values()), dtype=np.uint8)[np.array(inputs).reshape(-1)]
+    return np.array(list(nuc_onehot_enc.values()), dtype=np.uint8)[np.array(inputs).reshape(-1)]
 
 
 @tf.function

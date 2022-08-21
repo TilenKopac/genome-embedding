@@ -11,30 +11,30 @@ from src.datasets.taxonomy_dataset import TaxonomyDataset, TaxonomicRankEnum
 from src.samplers.sampler_enum import SamplerEnum
 
 # dataset parameters
-data_dir = os.path.join(DATA_DIR, "bacteria_661k_assemblies_balanced")
-encoder_name = "661k_conv_small_loc_pres_ld10"
-sampler_name = SamplerEnum.HYPERCUBE_FINGERPRINT_MEDIAN_NORMALIZED.value
+data_dir = os.path.join(DATA_DIR, "deepmicrobes_mag_reads")
+encoder_name = "661k_conv_small_loc_pres_ld10_ws100"
+sampler_name = SamplerEnum.NO_SAMPLER.value
 
-window_size = 128
-batch_size = 64
+window_size = 100
+batch_size = 4096
 tax_rank = TaxonomicRankEnum.FAMILY
 
-with open(os.path.join(DATA_DIR, "bacteria_661k_assemblies", "taxa_index.pkl"), "rb") as file:
+with open(os.path.join(DATA_DIR, "deepmicrobes_mag_reads", "taxa_index.pkl"), "rb") as file:
     taxa_index = pickle.load(file)
-with open(os.path.join(DATA_DIR, "bacteria_661k_assemblies", "organism_taxa.pkl"), "rb") as file:
+with open(os.path.join(DATA_DIR, "deepmicrobes_mag_reads", "organism_taxa.pkl"), "rb") as file:
     organism_taxa = pickle.load(file)
 train_dataset = TaxonomyDataset(data_dir, "train", encoder_name, sampler_name, batch_size, taxa_index, organism_taxa,
                                 tax_rank, limit=None)
+
 val_dataset = TaxonomyDataset(data_dir, "val", encoder_name, sampler_name, batch_size, taxa_index, organism_taxa,
                               tax_rank, limit=None)
-train_dataset.get_record()
 
 # training parameters
 learning_rate = 1e-5
-n_epochs = 100
+n_epochs = 50
 
-classifier_name = "bacteria-family-hypercube-median-normalized-classifier"
-classifier = TaxonomyClassifier(train_dataset.n_labels, n_layers=4, n_units=100)
+classifier_name = "mag-reads-family-classifier"
+classifier = TaxonomyClassifier(train_dataset.n_labels)
 optimizer = tf.keras.optimizers.Adam(learning_rate)
 
 # metrics
@@ -47,7 +47,7 @@ val_acc_metric = tf.keras.metrics.CategoricalAccuracy()
 def train_step(x, y_true):
     with tf.GradientTape() as tape:
         # predict taxa
-        y_pred = classifier(x)
+        y_pred = classifier(x, training=True)
 
         # compute loss
         loss_value = loss_fn(y_true, y_pred)

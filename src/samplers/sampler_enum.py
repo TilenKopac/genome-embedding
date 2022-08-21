@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class SamplerEnum(Enum):
+    NO_SAMPLER = "no_sampler"
     CENTROID = "centroid-sampler"
     RANDOM = "random-sampler"
     CONVEX_HULL = "convex-hull-sampler"
