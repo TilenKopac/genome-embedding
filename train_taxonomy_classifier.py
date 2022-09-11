@@ -11,22 +11,25 @@ from src.datasets.taxonomy_dataset import TaxonomyDataset, TaxonomicRankEnum
 from src.samplers.sampler_enum import SamplerEnum
 
 # dataset parameters
-data_dir = os.path.join(DATA_DIR, "deepmicrobes_mag_reads")
+dataset_dir = os.path.join(DATA_DIR, "deepmicrobes_mag_reads")
 encoder_name = "661k_conv_small_loc_pres_ld10_ws100"
 sampler_name = SamplerEnum.NO_SAMPLER.value
+# dataset_dir = os.path.join(DATA_DIR, "bacteria_661k_assemblies_balanced")
+# encoder_name = "661k_conv_small_loc_pres_ld10"
+# sampler_name = SamplerEnum.HYPERCUBE_FINGERPRINT_MEDIAN.value
 
 window_size = 100
-batch_size = 4096
+batch_size = 64
 tax_rank = TaxonomicRankEnum.FAMILY
 
-with open(os.path.join(DATA_DIR, "deepmicrobes_mag_reads", "taxa_index.pkl"), "rb") as file:
+with open(os.path.join(dataset_dir, "taxa_index.pkl"), "rb") as file:
     taxa_index = pickle.load(file)
-with open(os.path.join(DATA_DIR, "deepmicrobes_mag_reads", "organism_taxa.pkl"), "rb") as file:
+with open(os.path.join(dataset_dir, "organism_taxa.pkl"), "rb") as file:
     organism_taxa = pickle.load(file)
-train_dataset = TaxonomyDataset(data_dir, "train", encoder_name, sampler_name, batch_size, taxa_index, organism_taxa,
+train_dataset = TaxonomyDataset(dataset_dir, "train", encoder_name, sampler_name, batch_size, taxa_index, organism_taxa,
                                 tax_rank, limit=None)
 
-val_dataset = TaxonomyDataset(data_dir, "val", encoder_name, sampler_name, batch_size, taxa_index, organism_taxa,
+val_dataset = TaxonomyDataset(dataset_dir, "val", encoder_name, sampler_name, batch_size, taxa_index, organism_taxa,
                               tax_rank, limit=None)
 
 # training parameters
@@ -34,6 +37,7 @@ learning_rate = 1e-5
 n_epochs = 50
 
 classifier_name = "mag-reads-family-classifier"
+# classifier_name = "bacteria-family-hypercube-median-normalized-classifier"
 classifier = TaxonomyClassifier(train_dataset.n_labels)
 optimizer = tf.keras.optimizers.Adam(learning_rate)
 

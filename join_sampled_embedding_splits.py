@@ -7,7 +7,7 @@ from definitions import DATA_DIR
 
 _, dataset_name, autoencoder_name, sampler_name, n_splits_str = sys.argv
 n_splits = int(n_splits_str)
-data_dir = os.path.join(DATA_DIR, dataset_name, "sampled-embeddings", autoencoder_name, sampler_name)
+data_dir = os.path.join(DATA_DIR, dataset_name, "embeddings", autoencoder_name, sampler_name)
 
 if not os.path.isdir(os.path.join(data_dir, "splits")):
     print(f"Sampled embeddings for given arguments do not exist. Exiting...")

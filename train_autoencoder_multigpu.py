@@ -1,4 +1,3 @@
-import gc
 import os
 import time
 from multiprocessing import util
@@ -186,7 +185,6 @@ while epoch.numpy() < n_epochs:
         train_step(step_in_epoch, iterator)
         step_in_epoch.assign_add(1.0)
 
-        # update progress bar
         if step_in_epoch.numpy() % 100 == 0:
             iteration = epoch.numpy() * train_dataset.global_n_batches + step_in_epoch.numpy()
             with train_summary_writer.as_default():
@@ -196,11 +194,8 @@ while epoch.numpy() < n_epochs:
                 tf.summary.scalar(f"train_sequentiality_loss_iters", train_seq_loss.result(), step=iteration)
                 tf.summary.scalar(f"train_similarity_loss_iters", train_sim_loss.result(), step=iteration)
                 tf.summary.scalar(f"train_accuracy_iters", train_accuracy.result(), step=iteration)
-                tf.summary.scalar(f"val_reconstruction_loss_iters", val_rec_loss.result(), step=iteration)
-                tf.summary.scalar(f"val_sequentiality_loss_iters", val_seq_loss.result(), step=iteration)
-                tf.summary.scalar(f"val_similarity_loss_iters", val_sim_loss.result(), step=iteration)
-                tf.summary.scalar(f"val_accuracy_iters", val_accuracy.result(), step=iteration)
             if _is_chief(task_type, task_id, cluster_spec):
+                # update progress bar
                 pbar.update(100)
 
     # validation loop setup
@@ -218,8 +213,8 @@ while epoch.numpy() < n_epochs:
         val_step(iterator)
         step_in_epoch.assign_add(1.0)
 
-        # update progress bar
         if step_in_epoch.numpy() % 100 == 0 and _is_chief(task_type, task_id, cluster_spec):
+            # update progress bar
             pbar.update(100)
 
     # write metrics

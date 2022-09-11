@@ -4,7 +4,7 @@ import time
 import tensorflow as tf
 from tqdm import tqdm
 
-from definitions import DATA_DIR, CHECKPOINTS_DIR, TRAIN_LOGS_DIR, MODELS_DIR
+from definitions import DATA_DIR, CHECKPOINTS_DIR, TRAIN_LOGS_DIR
 from src.autoencoders.convolutional_small_autoencoder import ConvolutionalSmallAutoencoder
 from src.datasets.genome_window_dataset import GenomeWindowDataset
 from src.metrics.locality_preserving_loss import LocalityPreservingLoss

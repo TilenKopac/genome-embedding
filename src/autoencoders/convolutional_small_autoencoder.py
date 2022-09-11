@@ -23,7 +23,7 @@ class ConvolutionalSmallAutoencoder(tf.keras.Model):
                 tf.keras.layers.MaxPool1D(self.pool_size, padding="same"),
                 tf.keras.layers.BatchNormalization(),
                 tf.keras.layers.Flatten(),
-                tf.keras.layers.Dense(self.latent_dim, activation="relu")
+                tf.keras.layers.Dense(self.latent_dim, activation="elu")
             ]
         )
         self.decoder = tf.keras.Sequential(
