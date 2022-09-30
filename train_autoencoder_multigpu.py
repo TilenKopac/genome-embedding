@@ -46,7 +46,7 @@ val_dataset = DistributedGenomeWindowDataset(data_dir, "val", window_size, step_
 # autoencoder parameters
 latent_dim = 10
 pool_size = 2
-autoencoder_name = "661k_conv_small_loc_pres_ld10_ws100"
+autoencoder_name = "661k_conv_small_elu_loc_pres_ld10_ws100_take_2"
 
 # training parameters
 max_seq_weight = 1e-2
@@ -160,7 +160,7 @@ epoch = tf.Variable(initial_value=tf.constant(start_epoch, dtype=tf.dtypes.int64
 step_in_epoch = tf.Variable(initial_value=tf.constant(0.0, dtype=tf.dtypes.float32), name="step_in_epoch")
 checkpoint = tf.train.Checkpoint(model=autoencoder)
 write_checkpoint_dir = write_filepath(checkpoints_dir, task_type, task_id, cluster_spec)
-checkpoint_manager = tf.train.CheckpointManager(checkpoint, directory=write_checkpoint_dir, max_to_keep=1)
+checkpoint_manager = tf.train.CheckpointManager(checkpoint, directory=write_checkpoint_dir, max_to_keep=None)
 
 # restore latest checkpoint, if it exists
 latest_checkpoint = tf.train.latest_checkpoint(checkpoints_dir)

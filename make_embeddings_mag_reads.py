@@ -5,6 +5,7 @@ import sys
 
 import tensorflow as tf
 from Bio import SeqIO
+from tqdm import tqdm
 
 from definitions import DATA_DIR, MODELS_DIR
 from src.datasets.commons import preprocessing
@@ -34,7 +35,7 @@ with open(os.path.join(dataset_dir, "organism_taxa.pkl"), "rb") as file:
     organism_taxa = pickle.load(file)
 
 # each process prepares embeddings for 7 files
-for in_filename in os.listdir(input_dir)[process_index * 7:process_index * 7 + 7]:
+for in_filename in tqdm(os.listdir(input_dir)[process_index * 7:process_index * 7 + 7]):
     org_id = in_filename.split(".")[0].split("_")[1]
     if org_id in organism_taxa:
         out_file_path = os.path.join(output_dir, f"{org_id}.csv")
@@ -51,7 +52,7 @@ for in_filename in os.listdir(input_dir)[process_index * 7:process_index * 7 + 7
                 # skip the next record, which is just a reverse complement of the current one
                 next(records)
 
-                # embed all organism's reads using our (auto)encoder
+            # embed all organism's reads using our (auto)encoder
             embeddings = encoder(tf.constant(encoded_reads, dtype=tf.float32))
 
             # store embeddings

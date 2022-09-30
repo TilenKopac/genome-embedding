@@ -1,11 +1,8 @@
-import math
 import os
-import zlib
 
 import tensorflow as tf
-from tqdm import tqdm
 
-from src.datasets.commons import input_output, preprocessing
+from src.datasets.commons import preprocessing
 
 
 class GenomeWindowDataset:
