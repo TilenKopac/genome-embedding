@@ -20,7 +20,7 @@ sampler_name = SamplerEnum.NO_SAMPLER.value
 
 window_size = 100
 batch_size = 4096
-tax_rank = TaxonomicRankEnum.CLASS
+tax_rank = TaxonomicRankEnum.GENUS
 
 with open(os.path.join(dataset_dir, "taxa_index.pkl"), "rb") as file:
     taxa_index = pickle.load(file)
@@ -34,12 +34,12 @@ train_dataset_iter = iter(train_dataset.tf_dataset)
 val_dataset_iter = iter(val_dataset.tf_dataset)
 
 # training parameters
-learning_rate = 1e-5
-n_epochs = 50
+learning_rate = 1e-6
+n_epochs = 30
 
-classifier_name = "mag-reads-class-classifier-with-class-weights"
+classifier_name = "mag-reads-genus-classifier-4-layers-32-units"
 # classifier_name = "bacteria-family-hypercube-median-normalized-classifier"
-classifier = TaxonomyClassifier(train_dataset.n_labels)
+classifier = TaxonomyClassifier(train_dataset.n_labels, n_layers=4, n_units=32)
 optimizer = tf.keras.optimizers.Adam(learning_rate)
 
 # metrics
