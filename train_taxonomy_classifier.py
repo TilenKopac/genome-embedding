@@ -37,7 +37,7 @@ val_dataset_iter = iter(val_dataset.tf_dataset)
 learning_rate = 1e-6
 n_epochs = 30
 
-classifier_name = "mag-reads-genus-classifier-4-layers-32-units"
+classifier_name = "mag-reads-genus-classifier-4-layers-32-units-inverse-class-weights"
 # classifier_name = "bacteria-family-hypercube-median-normalized-classifier"
 classifier = TaxonomyClassifier(train_dataset.n_labels, n_layers=4, n_units=32)
 optimizer = tf.keras.optimizers.Adam(learning_rate)

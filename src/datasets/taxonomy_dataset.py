@@ -1,6 +1,7 @@
 import json
 import os
 import pickle
+import random
 from collections import Counter
 from enum import Enum
 
@@ -73,17 +74,18 @@ class TaxonomyDataset:
         weights = []
         for cls, count in class_counter.items():
             classes.append(cls)
-            weights.append(1 - count / total)
+            # weights.append(1 - count / total)
+            weights.append(count)
 
-        # normalize weights
-        norm_factor = sum(weights)
-        for weight in weights:
-            weight /= norm_factor
+        # # normalize weights
+        # norm_factor = sum(weights)
+        # for weight in weights:
+        #     weight /= norm_factor
 
         # create lookup table
         table = tf.lookup.StaticHashTable(
             tf.lookup.KeyValueTensorInitializer(tf.constant(classes), tf.constant(weights)),
-            default_value=1.0
+            default_value=1
         )
 
         return table
@@ -95,7 +97,7 @@ class TaxonomyDataset:
                                                          self.class_weights.lookup(tax_id)),
                               num_parallel_calls=tf.data.AUTOTUNE)
         if self.shuffle:
-            dataset = dataset.shuffle(int(self.n_batches * 0.1 * self.batch_size))
+            dataset = dataset.shuffle(int(self.n_batches * 0.2 * self.batch_size))
         dataset = dataset.batch(self.batch_size, drop_remainder=True, num_parallel_calls=tf.data.AUTOTUNE)
         if self.limit:
             dataset = dataset.take(self.limit)
